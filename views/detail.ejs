@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="<%= langCode %>">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title><%= anime.title %> — Anime Search Engine</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav class="navbar navbar-dark sticky-top px-3 py-2" id="main-nav">
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+      <img src="https://avatars.githubusercontent.com/u/246539416?s=96&v=4" class="brand-logo rounded" alt="Logo" style="width:32px;height:32px;object-fit:cover;" />
+      <span>Anime Search Engine</span>
+    </a>
+    <div class="d-flex gap-2">
+      <a href="/anime/<%= anime.mal_id %>?lang=<%= langCode === 'en' ? 'kh' : 'en' %>" class="btn btn-sm btn-outline-warning">
+        <i class="bi bi-translate"></i> <%= langCode === 'en' ? 'KH' : 'EN' %>
+      </a>
+      <a href="javascript:history.back()" class="btn btn-sm btn-outline-light"><i class="bi bi-arrow-left"></i> <%= t.back %></a>
+    </div>
+  </nav>
+
+  <main class="container py-3">
+
+    <!-- Banner -->
+    <div class="detail-banner mb-3 rounded overflow-hidden position-relative">
+      <% if (anime.trailer && anime.trailer.images && anime.trailer.images.maximum_image_url) { %>
+      <img src="<%= anime.trailer.images.maximum_image_url %>" class="banner-img w-100" alt="Banner" />
+      <% } %>
+      <div class="banner-overlay d-flex align-items-end p-3">
+        <img
+          src="<%= anime.images.jpg.large_image_url %>"
+          class="detail-poster rounded shadow"
+          alt="<%= anime.title %>"
+        />
+        <div class="ms-3">
+          <h1 class="h5 fw-bold text-white mb-1"><%= anime.title %></h1>
+          <% if (anime.title_english && anime.title_english !== anime.title) { %>
+          <p class="text-white-50 small mb-1"><%= anime.title_english %></p>
+          <% } %>
+          <div class="d-flex flex-wrap gap-1 mt-1">
+            <% if (anime.score) { %>
+            <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> <%= anime.score %></span>
+            <% } %>
+            <span class="badge bg-dark"><%= anime.type || 'N/A' %></span>
+            <% if (anime.status) { %>
+            <span class="badge <%= anime.status === 'Currently Airing' ? 'bg-success' : 'bg-secondary' %>"><%= anime.status %></span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="row g-2 mb-3 text-center">
+      <div class="col-3">
+        <div class="stat-card p-2 rounded">
+          <div class="text-warning fw-bold"><%= anime.score || '?' %></div>
+          <div class="text-muted" style="font-size:0.65rem"><%= langCode === 'en' ? 'Score' : 'ពិន្ទុ' %></div>
+        </div>
+      </div>
+      <div class="col-3">
+        <div class="stat-card p-2 rounded">
+          <div class="fw-bold text-white"><%= anime.episodes || '?' %></div>
+          <div class="text-muted" style="font-size:0.65rem"><%= langCode === 'en' ? 'Episodes' : 'ភាគ' %></div>
+        </div>
+      </div>
+      <div class="col-3">
+        <div class="stat-card p-2 rounded">
+          <div class="fw-bold text-info"><%= anime.rank ? '#'+anime.rank : '?' %></div>
+          <div class="text-muted" style="font-size:0.65rem"><%= langCode === 'en' ? 'Rank' : 'ចំណាត់' %></div>
+        </div>
+      </div>
+      <div class="col-3">
+        <div class="stat-card p-2 rounded">
+          <div class="fw-bold text-white"><%= anime.year || '?' %></div>
+          <div class="text-muted" style="font-size:0.65rem"><%= langCode === 'en' ? 'Year' : 'ឆ្នាំ' %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Genres -->
+    <% if (anime.genres && anime.genres.length) { %>
+    <div class="mb-3">
+      <div class="d-flex flex-wrap gap-1">
+        <% anime.genres.forEach(g => { %>
+        <a href="/?lang=<%= langCode %>&genre=<%= g.mal_id %>" class="badge bg-primary text-decoration-none"><%= g.name %></a>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Synopsis -->
+    <% if (anime.synopsis) { %>
+    <div class="card bg-dark-card border-0 mb-3">
+      <div class="card-body p-3">
+        <h6 class="fw-bold text-white mb-2"><i class="bi bi-journal-text me-2"></i><%= t.synopsis %></h6>
+        <p class="text-muted small synopsis-text" id="synopsis"><%= anime.synopsis.replace('[Written by MAL Rewrite]','').trim() %></p>
+        <button class="btn btn-sm btn-link text-primary p-0 mt-1" onclick="toggleSynopsis()"><%= t.showMore %></button>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Details -->
+    <div class="card bg-dark-card border-0 mb-3">
+      <div class="card-body p-3">
+        <h6 class="fw-bold text-white mb-2"><i class="bi bi-info-circle me-2"></i><%= t.details %></h6>
+        <table class="table table-sm table-dark table-borderless mb-0 small">
+          <% const details = [
+            [t.studio, anime.studios && anime.studios.map(s=>s.name).join(', ')],
+            [t.source, anime.source],
+            [t.duration, anime.duration],
+            [t.rating, anime.rating],
+            [t.season, anime.season ? (anime.season + ' ' + anime.year) : null],
+            [t.aired, anime.aired && anime.aired.string],
+            [t.scoredBy, anime.scored_by ? anime.scored_by.toLocaleString() + ' ' + t.users : null],
+            [t.popularity, anime.popularity ? '#'+anime.popularity : null],
+          ]; %>
+          <% details.forEach(([label, val]) => { if (!val) return; %>
+          <tr>
+            <td class="text-muted pe-3" style="width:35%"><%= label %></td>
+            <td class="text-white"><%= val %></td>
+          </tr>
+          <% }) %>
+        </table>
+      </div>
+    </div>
+
+    <!-- Trailer -->
+    <% if (anime.trailer && anime.trailer.embed_url) { %>
+    <div class="mb-3">
+      <h6 class="fw-bold text-white mb-2"><i class="bi bi-play-circle me-2"></i><%= t.trailer %></h6>
+      <div class="ratio ratio-16x9 rounded overflow-hidden">
+        <iframe src="<%= anime.trailer.embed_url %>" allowfullscreen></iframe>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Characters -->
+    <% if (characters && characters.length) { %>
+    <div class="mb-3">
+      <h6 class="fw-bold text-white mb-2"><i class="bi bi-people me-2"></i><%= t.characters %></h6>
+      <div class="row row-cols-4 g-2">
+        <% characters.forEach(c => { %>
+        <div class="col text-center">
+          <img src="<%= c.character.images.jpg.image_url %>" class="rounded-circle char-img mb-1" alt="<%= c.character.name %>" />
+          <p class="text-muted" style="font-size:0.6rem; line-height:1.2"><%= c.character.name.split(', ').reverse().join(' ') %></p>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- MAL link -->
+    <div class="text-center mt-3">
+      <a href="https://myanimelist.net/anime/<%= anime.mal_id %>" target="_blank" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-box-arrow-up-right me-1"></i><%= t.viewMal %>
+      </a>
+    </div>
+
+  </main>
+
+  <footer class="text-center py-3 mt-4" id="footer">
+    <small class="text-muted">
+      Powered by <a href="https://jikan.moe" target="_blank">Jikan API</a> · 
+      Made by <a href="https://github.com/blaxkmiradev" target="_blank">Rikixz</a>
+    </small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let expanded = false;
+    const synopsisEl = document.getElementById('synopsis');
+    const maxLen = 300;
+    const fullText = synopsisEl ? synopsisEl.textContent : '';
+    const showMoreText = '<%= t.showMore %>';
+    const showLessText = '<%= t.showLess %>';
+
+    function toggleSynopsis() {
+      expanded = !expanded;
+      const btn = event.target;
+      if (!expanded && fullText.length > maxLen) {
+        synopsisEl.textContent = fullText.slice(0, maxLen) + '...';
+        btn.textContent = showMoreText;
+      } else {
+        synopsisEl.textContent = fullText;
+        btn.textContent = showLessText;
+      }
+    }
+
+    // Truncate on load
+    if (synopsisEl && fullText.length > maxLen) {
+      synopsisEl.textContent = fullText.slice(0, maxLen) + '...';
+    }
+  </script>
+</body>
+</html>
